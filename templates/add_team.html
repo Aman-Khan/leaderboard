@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Team and Members</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .member-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .remove-member {
+            background-color: #dc3545;
+            border: none;
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .remove-member:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Add Team and Members</h1>
+        <form id="team-form" method="POST">
+            <div class="form-group">
+                <label for="team_name">Team Name:</label>
+                <input type="text" id="team_name" name="team_name" required>
+            </div>
+            <div id="members-container">
+                <div class="form-group member-group">
+                    <label for="member_name_1">Member Name:</label>
+                    <input type="text" id="member_name_1" name="member_names[]" required>
+                    <button type="button" class="remove-member" onclick="removeMember(this)">Remove</button>
+                </div>
+            </div>
+            <button type="button" onclick="addMember()">Add Another Member</button>
+            <button type="submit">Submit</button>
+        </form>
+        <a href="{{ url_for('index') }}">Back to Leaderboard</a>
+    </div>
+    <script>
+        let memberIndex = 1;
+
+        function addMember() {
+            memberIndex++;
+            const membersContainer = document.getElementById('members-container');
+            const newMemberGroup = document.createElement('div');
+            newMemberGroup.classList.add('form-group', 'member-group');
+
+            newMemberGroup.innerHTML = `
+                <label for="member_name_${memberIndex}">Member Name:</label>
+                <input type="text" id="member_name_${memberIndex}" name="member_names[]" required>
+                <button type="button" class="remove-member" onclick="removeMember(this)">Remove</button>
+            `;
+
+            membersContainer.appendChild(newMemberGroup);
+        }
+
+        function removeMember(button) {
+            button.parentElement.remove();
+        }
+    </script>
+</body>
+</html>

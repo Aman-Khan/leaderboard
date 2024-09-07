@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Teams</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .score-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .score-buttons button {
+            padding: 5px 10px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .score-buttons .danger{
+            background-color: red;
+        }
+
+        .score-buttons button:hover {
+            background-color: #0056b3;
+        }
+
+        .update-form {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Search Teams</h1>
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search for team members...">
+        </div>
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Team Name</th>
+                    <th>Score</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Search results will be populated here -->
+            </tbody>
+        </table>
+        <a href="{{ url_for('index') }}">Back to Leaderboard</a>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const resultsTable = document.getElementById('resultsTable').getElementsByTagName('tbody')[0];
+
+        let debounceTimeout;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                const query = searchInput.value.trim();
+                if (query) {
+                    fetch(`/search?query=${query}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            resultsTable.innerHTML = '';
+                            data.forEach(team => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${team.team_name}</td>
+                                    <td id="score-${team.id}">${team.score}</td>
+                                    <td>
+                                        <div class="score-buttons">
+                                            <button class="score-btn" data-team-id="${team.id}" data-change="10">+10</button>
+                                            <button class="score-btn" data-team-id="${team.id}" data-change="5">+5</button>
+                                            <button class="score-btn danger" data-team-id="${team.id}" data-change="-3">-3</button>
+                                        </div>
+                                    </td>
+                                `;
+                                resultsTable.appendChild(row);
+                            });
+                        });
+                } else {
+                    resultsTable.innerHTML = '';
+                }
+            }, 300);  // Debounce delay
+        });
+
+        resultsTable.addEventListener('click', (event) => {
+            if (event.target.classList.contains('score-btn')) {
+                const button = event.target;
+                const teamId = button.getAttribute('data-team-id');
+                const scoreChange = parseInt(button.getAttribute('data-change'), 10);
+                const scoreCell = document.getElementById(`score-${teamId}`);
+                const currentScore = parseInt(scoreCell.textContent, 10);
+                const newScore = currentScore + scoreChange;
+
+                fetch('/update_score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        'team_id': teamId,
+                        'score': newScore
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message) {
+                        scoreCell.textContent = newScore;  // Update the score display
+                        alert(data.message);
+                    } else if (data.error) {
+                        alert(data.error);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
