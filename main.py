@@ -21,8 +21,13 @@ class TeamMembers(db.Model):
     member_name = db.Column(db.String(50), nullable=False)
     team_name = db.Column(db.String(50), db.ForeignKey('team_score.team_name'), nullable=False)
 
-with app.app_context():
-    db.create_all()
+def create_db():
+    if not os.path.exists('local_database.db'):
+        with app.app_context():
+            db.create_all()
+
+create_db()
+
 
 @app.route('/')
 def index():
