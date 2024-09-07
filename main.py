@@ -2,10 +2,12 @@ import os
 
 from flask import Flask, send_file, render_template, request, redirect, url_for, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///local_database.db'
 db = SQLAlchemy(app)
+CORS(app)
 
 # Define the TeamScore model
 class TeamScore(db.Model):
