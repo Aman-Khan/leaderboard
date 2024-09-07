@@ -1,0 +1,22 @@
+{
+    "version": 2,
+    "builds": [
+      {
+        "src": "leaderboard/main.py",
+        "use": "@vercel/python",
+        "config": {
+          "maxLambdaSize": "50mb"
+        }
+      }
+    ],
+    "routes": [
+      {
+        "src": "/(.*)",
+        "dest": "/leaderboard/main.py"
+      }
+    ],
+    "env": {
+      "DATABASE_URL": "sqlite:///leaderboard/local_database.db"
+    }
+  }
+  
