@@ -5,30 +5,28 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 
-# Use environment variable for database URI, fallback to SQLite for local development
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI', 'sqlite:///local_database.db')
+# Use environment variable for database URI
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI', 'postgresql://default:liLPk1Ozt9CB@ep-billowing-sun-a1bkn2x0.ap-southeast-1.aws.neon.tech:5432/verceldb?sslmode=require')
 db = SQLAlchemy(app)
+
 CORS(app)
 
-# Define the TeamScore model
 class TeamScore(db.Model):
-    id = db.Column(db.String(50), primary_key=True)
+    __tablename__ = 'team_score'
+    id = db.Column(db.String, primary_key=True)
     team_name = db.Column(db.String(50), nullable=False)
     score = db.Column(db.Integer, nullable=False)
 
-# Define the TeamMembers model
 class TeamMembers(db.Model):
+    __tablename__ = 'team_members'
     id = db.Column(db.Integer, primary_key=True)
     member_name = db.Column(db.String(50), nullable=False)
-    team_name = db.Column(db.String(50), db.ForeignKey('team_score.team_name'), nullable=False)
+    team_id = db.Column(db.String, db.ForeignKey('team_score.id'), nullable=False)
+    
+    team = db.relationship('TeamScore', backref=db.backref('members', lazy=True))
 
-def create_db():
-    if not os.path.exists('local_database.db'):
-        with app.app_context():
-            db.create_all()
-
-create_db()
-
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def index():
@@ -58,7 +56,7 @@ def add():
             # Add members to the team
             for member_name in member_names:
                 if member_name:
-                    new_member = TeamMembers(member_name=member_name, team_name=team_name)
+                    new_member = TeamMembers(member_name=member_name, team_id=team_id)
                     db.session.add(new_member)
 
             db.session.commit()
@@ -67,12 +65,13 @@ def add():
 
     return render_template('add_team.html')
 
+
 @app.route('/teams_all')
 def teams_all():
     teams = TeamScore.query.all()
     teams_data = []
     for team in teams:
-        members = TeamMembers.query.filter_by(team_name=team.team_name).all()
+        members = TeamMembers.query.filter_by(team_id=team.id).all()
         team_data = {
             'id': team.id,
             'team_name': team.team_name,
@@ -107,6 +106,24 @@ def update_score():
 @app.route('/search_page')
 def search_page():
     return render_template('search.html')
+
+
+@app.route('/clear_database_page', methods=['GET'])
+def clear_database_page():
+    return render_template('clear_database.html')
+
+@app.route('/clear_database', methods=['POST'])
+def clear_database():
+    try:
+        # Drop all tables
+        db.drop_all()
+        
+        # Recreate tables
+        db.create_all()
+        
+        return jsonify({'message': 'Database cleared successfully.'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # def main():
